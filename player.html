@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebRTC Player</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: black;
+    }
+    video {
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <video id="rtcVideo" autoplay playsinline controls></video>
+  <script>
+    // Replace with your WebRTC stream URL
+    const streamUrl = decodeURIComponent(location.search.split('url=')[1]);
+
+    if (streamUrl) {
+      const videoElement = document.getElementById('rtcVideo');
+      const pc = new RTCPeerConnection();
+      
+      pc.ontrack = (event) => {
+        videoElement.srcObject = event.streams[0];
+      };
+
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+
+      fetch(`${streamUrl}`).then((response) => {
+        return response.json();
+      }).then((offer) => {
+        pc.setRemoteDescription(new RTCSessionDescription(offer));
+        return pc.createAnswer();
+      }).then((answer) => {
+        return pc.setLocalDescription(answer);
+      });
+    } else {
+      alert('No WebRTC URL provided!');
+    }
+  </script>
+</body>
+</html>
